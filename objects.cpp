@@ -57,7 +57,7 @@ MovableObject::MovableObject(Terrain *t)             // konstruktor
 
 	//iID = (unsigned int)(clock() % 1000);  // identyfikator obiektu
 	iID = (unsigned int)(rand() % 1000);  // identyfikator obiektu
-	fprintf(f, "Nowy obiekt: iID = %d\n", iID);
+	//fprintf(f, "Nowy obiekt: iID = %d\n", iID);
 	iID_wlasc = iID;           // identyfikator w³aœciciela obiektu
 	czy_autonom = 0;
 
@@ -1331,10 +1331,10 @@ int Terrain::Zapis(char nazwa_pliku[])
 	fwrite(&granica_x, sizeof(float), 1, pl);
 	fwrite(&granica_z, sizeof(float), 1, pl);
 	fwrite(&liczba_sekt, sizeof(long), 1, pl);
-	fprintf(f, "jest %d sektorow z mapami wysokosciowych + opisem nawierzchni + poz.wody lub innymi informacjami \n", liczba_sekt);
+	//fprintf(f, "jest %d sektorow z mapami wysokosciowych + opisem nawierzchni + poz.wody lub innymi informacjami \n", liczba_sekt);
 	for (long i = 0; i < ts->liczba_komorek; i++)
 	{
-		fprintf(f, "  w komorce %d tab.hash jest %d sektorow:\n", i, ts->komorki[i].liczba_sektorow);
+		//fprintf(f, "  w komorce %d tab.hash jest %d sektorow:\n", i, ts->komorki[i].liczba_sektorow);
 		for (long j = 0; j < ts->komorki[i].liczba_sektorow; j++)
 		{
 			Sektor *s = ts->komorki[i].sektory[j];
@@ -1357,16 +1357,16 @@ int Terrain::Zapis(char nazwa_pliku[])
 					for (int w = 0; w < loczek; w++)
 						fwrite(ts->komorki[i].sektory[j]->poziom_wody[w], sizeof(float), loczek, pl);
 
-					fprintf(f, "    sekt.%d z mapa, w = %d, k = %d, rozmiar = %d\n", j, ts->komorki[i].sektory[j]->w,
-						ts->komorki[i].sektory[j]->k, loczek);
+					//fprintf(f, "    sekt.%d z mapa, w = %d, k = %d, rozmiar = %d\n", j, ts->komorki[i].sektory[j]->w,
+						//ts->komorki[i].sektory[j]->k, loczek);
 				}
 				else
 				{
 					fwrite(&ts->komorki[i].sektory[j]->typ_naw_sek, sizeof(int), 1, pl);
 					fwrite(&ts->komorki[i].sektory[j]->wysokosc_gruntu_sek, sizeof(float), 1, pl);
 					fwrite(&ts->komorki[i].sektory[j]->poziom_wody_sek, sizeof(float), 1, pl);
-					fprintf(f, "    sekt.%d bez mapy, w = %d, k = %d, rozmiar = %d\n", j, ts->komorki[i].sektory[j]->w,
-						ts->komorki[i].sektory[j]->k, loczek);
+					//fprintf(f, "    sekt.%d bez mapy, w = %d, k = %d, rozmiar = %d\n", j, ts->komorki[i].sektory[j]->w,
+						//ts->komorki[i].sektory[j]->k, loczek);
 				}
 			} // jeœli jakaœ informacja jest w sektorze poza przedmiotami i obiektami ruchomymi
 		} // po sektorach
@@ -1396,7 +1396,7 @@ int Terrain::Odczyt(char nazwa_pliku[])
 	if (!pl)
 	{
 		printf("Nie dalo sie otworzyc pliku %s do odczytu!\n", nazwa_pliku);
-		fprintf(f, "Nie dalo sie otworzyc pliku %s do odczytu!\n", nazwa_pliku);
+		//fprintf(f, "Nie dalo sie otworzyc pliku %s do odczytu!\n", nazwa_pliku);
 		return -1;
 	}
 
@@ -1410,13 +1410,13 @@ int Terrain::Odczyt(char nazwa_pliku[])
 	long _liczba_sekt = 0;        // czyli liczba sektorów 
 	fread(&_liczba_sekt, sizeof(long), 1, pl);
 
-	fprintf(f, "\nOdczyt danych o terrainie z pliku %s\n\n", nazwa_pliku);
+	/*fprintf(f, "\nOdczyt danych o terrainie z pliku %s\n\n", nazwa_pliku);
 	fprintf(f, "  rozmiar sektora = %f\n", rozmiar_sektora);
 	fprintf(f, "  czas odnowy przedmiotu = %f\n", czas_odnowy_przedm);
 	fprintf(f, "  czy_toroidalnosc = %d\n", czy_toroidalnosc);
 	fprintf(f, "  granica_x = %f\n", granica_x);
 	fprintf(f, "  granica_z = %f\n", granica_z);
-	fprintf(f, "  liczba sekt. = %d\n", _liczba_sekt);
+	fprintf(f, "  liczba sekt. = %d\n", _liczba_sekt);*/
 
 	for (long i = 0; i < _liczba_sekt; i++)
 	{
@@ -1426,7 +1426,7 @@ int Terrain::Odczyt(char nazwa_pliku[])
 		fread(&k, sizeof(long), 1, pl);
 		fread(&loczek, sizeof(int), 1, pl);
 		fread(&czy_mapa, sizeof(int), 1, pl);      // czy dok³adna mapa
-		fprintf(f, "    mapa w=%d, k=%d, l.oczek = %d\n", w, k, loczek);
+		//fprintf(f, "    mapa w=%d, k=%d, l.oczek = %d\n", w, k, loczek);
 
 		Sektor *o = new Sektor(loczek, w, k, czy_mapa);
 		ts->wstaw(o);
@@ -1453,16 +1453,16 @@ int Terrain::Odczyt(char nazwa_pliku[])
 	}
 	long _liczba_przedm = 0;
 	fread(&_liczba_przedm, sizeof(long), 1, pl);
-	fprintf(f, "Znaleziono w pliku %s przedmioty w liczbie %d\n", nazwa_pliku, _liczba_przedm);
-	fclose(f);
+	//fprintf(f, "Znaleziono w pliku %s przedmioty w liczbie %d\n", nazwa_pliku, _liczba_przedm);
+	//fclose(f);
 	f = fopen("wzr_log.txt", "a");
 	p = new Przedmiot[_liczba_przedm];
 	for (long i = 0; i < _liczba_przedm; i++)
 	{
 		fread(&p[i], sizeof(Przedmiot), 1, pl);
-		fprintf(f, "  przedm.%d, typ = %d, wartosc = %f\n", i,p[i].typ,p[i].wartosc);
-		fclose(f);
-		f = fopen("wzr_log.txt", "a");
+		//fprintf(f, "  przedm.%d, typ = %d, wartosc = %f\n", i,p[i].typ,p[i].wartosc);
+		//fclose(f);
+		//f = fopen("wzr_log.txt", "a");
 		p[i].indeks = i;
 		WstawPrzedmiotWsektory(&p[i]);
 		UmieszczeniePrzedmiotuWterrainie(&p[i]);
@@ -1478,7 +1478,7 @@ int Terrain::Odczyt(char nazwa_pliku[])
 	for (long i = 0; i < liczba_par_edycji_fald; i++)
 		fread(&pf_rej[i], sizeof(ParamFaldy), 1, pl);
 
-	fprintf(f, "Koniec wczytywania danych o terrainie.\n");
+	//fprintf(f, "Koniec wczytywania danych o terrainie.\n");
 	fclose(pl);
 	return 1;
 }
@@ -1662,7 +1662,7 @@ long Terrain::WstawPrzedmiot(Przedmiot prz)
 	prz.indeks = ind;
 	p[ind] = prz;
 	
-	fprintf(f, "Utworzono przedmiot %d indeks = %d, typ = %d (%s)\n", &p[ind], ind, p[ind].typ, PRZ_nazwy[p[ind].typ]);
+	//fprintf(f, "Utworzono przedmiot %d indeks = %d, typ = %d (%s)\n", &p[ind], ind, p[ind].typ, PRZ_nazwy[p[ind].typ]);
 	UmieszczeniePrzedmiotuWterrainie(&p[ind]);
 	WstawPrzedmiotWsektory(&p[ind]);
 	//fprintf(f,"wstawiam przedmiot %d w miejsce (%f, %f, %f)\n",i,terrain.p[ind].wPol.x,terrain.p[ind].wPol.y,terrain.p[ind].wPol.z);
@@ -1765,8 +1765,8 @@ void Terrain::UsunZaznPrzedmioty()
 	}
 	
 
-	fprintf(f, "\n\nUsu.prz.: liczba przedm = %d, liczba zazn = %d\n", liczba_przedmiotow,liczba_zazn_przedm);
-	fprintf(f, "  lista przedmiotow:\n");
+	//fprintf(f, "\n\nUsu.prz.: liczba przedm = %d, liczba zazn = %d\n", liczba_przedmiotow,liczba_zazn_przedm);
+	//fprintf(f, "  lista przedmiotow:\n");
 	for (long i = 0; i < liczba_przedmiotow; i++){
 		fprintf(f, "%d: %d (%s) o wartosci %f\n", i, p[i].typ,PRZ_nazwy[p[i].typ], p[i].wartosc);
 		if (p[i].typ == PRZ_KRAWEDZ)
@@ -1777,7 +1777,7 @@ void Terrain::UsunZaznPrzedmioty()
 	{
 		long nr_prz = zazn_przedm[i];
 
-		fprintf(f, "  usuwam prz %d: %d (%s) o wartosci %f\n", nr_prz, p[nr_prz].typ,PRZ_nazwy[p[nr_prz].typ], p[nr_prz].wartosc);
+		//fprintf(f, "  usuwam prz %d: %d (%s) o wartosci %f\n", nr_prz, p[nr_prz].typ,PRZ_nazwy[p[nr_prz].typ], p[nr_prz].wartosc);
 
 		UsunPrzedmiotZsektorow(&p[nr_prz]);
 		
@@ -1867,14 +1867,14 @@ float Terrain::WysokoscGruntu(float x, float z)      // okreœlanie wysokoœci dla
 
 		if ((k_lok < 0) || (w_lok < 0))
 		{
-			fprintf(f,"procedura Terrain::Wysokosc: k i w lokalne nie moga byc ujemne!\n");
+			//fprintf(f,"procedura Terrain::Wysokosc: k i w lokalne nie moga byc ujemne!\n");
 			fclose(f);
 			exit(1);
 		}
 
 		if ((k_lok > loczek - 1) || (w_lok > loczek - 1))
 		{
-			fprintf(f, "procedura Terrain::Wysokosc: k i w lokalne nie moga byc wieksze od liczby oczek - 1!\n");
+			//fprintf(f, "procedura Terrain::Wysokosc: k i w lokalne nie moga byc wieksze od liczby oczek - 1!\n");
 			fclose(f);
 			exit(1);
 		}
@@ -1999,7 +1999,7 @@ void Terrain::WstawPrzedmiotWsektory(Przedmiot *prz)
 	for (long w = w1; w <= w2; w++)
 		for (long k = k1; k <= k2; k++)
 		{
-			fprintf(f, "wstawiam przedmiot %d: %s o wartosci %f i srednicy %f w sektor w = %d, k = %d\n", prz,PRZ_nazwy[prz->typ],prz->wartosc, prz->srednica, w, k);
+			//fprintf(f, "wstawiam przedmiot %d: %s o wartosci %f i srednicy %f w sektor w = %d, k = %d\n", prz,PRZ_nazwy[prz->typ],prz->wartosc, prz->srednica, w, k);
 			Sektor *ob = ts->znajdz(w, k);
 			if (ob == NULL) {                 // tworzymy sektor, gdy nie istnieje (mo¿na nie tworzyæ mapy)
 				ob = new Sektor(0, w, k, false);

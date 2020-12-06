@@ -54,6 +54,9 @@ bool SHIFTwcisniety = 0;
 bool CTRLwcisniety = 0;
 bool ALTwcisniety = 0;
 bool Lwcisniety = 0;
+int akceptacjaOdebranaOdiID = -1;
+int wspolpracaiID = -1;
+bool potwierdzonoZaproszenie = false;
 //bool rejestracja_uczestnikow = true;   // rejestracja trwa do momentu wziêcia przedmiotu przez któregokolwiek uczestnika,
 // w przeciwnym razie trzeba by przesy³aæ ca³y stan œrodowiska nowicjuszowi
 
@@ -67,11 +70,15 @@ long nr_miejsca_przedm = terrain.liczba_przedmiotow;  // numer miejsca, w który
 
 int opoznienia = 0;
 
+bool odebranoZapro = false; 
+
 
 extern float WyslaniePrzekazu(int ID_adresata, int typ_przekazu, float wartosc_przekazu);
+void WyslanieZaproszenia(int ID_adresata);
+void WyslanieAkceptacji(int ID_adresata);
 
 enum typy_ramek {
-	STAN_OBIEKTU, WZIECIE_PRZEDMIOTU, ODNOWIENIE_SIE_PRZEDMIOTU, KOLIZJA, PRZEKAZ
+	STAN_OBIEKTU, WZIECIE_PRZEDMIOTU, ODNOWIENIE_SIE_PRZEDMIOTU, KOLIZJA, PRZEKAZ, ZAPROSZENIE, AKCEPTACJA
 };
 
 enum typy_przekazu { GOTOWKA, PALIWO };
@@ -190,6 +197,24 @@ DWORD WINAPI WatekOdbioru(void *ptr)
 			}
 			break;
 		}
+		case ZAPROSZENIE:
+		{
+			if (ramka.iID_adresata == my_vehicle->iID)
+			{
+				odebranoZapro = true;
+				akceptacjaOdebranaOdiID = ramka.iID;
+			}
+			break;
+		}
+		case AKCEPTACJA:
+		{
+			if (ramka.iID_adresata == my_vehicle->iID)
+			{
+				potwierdzonoZaproszenie = true;
+				wspolpracaiID = ramka.iID;
+			}
+			break;
+		}
 		
 		} // switch po typach ramek
 		//Release the Critical section
@@ -234,6 +259,21 @@ void PoczatekInterakcji()
 void Cykl_WS()
 {
 	licznik_sym++;
+
+	if (odebranoZapro) {
+		int result = MessageBox(okno, "Odebrano zaproszenie do gry. Czy chcesz akceptowac?", "Akceptacja", MB_OK);
+		if (result == 1) {
+			wspolpracaiID = akceptacjaOdebranaOdiID;
+			odebranoZapro = false;
+			WyslanieAkceptacji(akceptacjaOdebranaOdiID);
+		}
+		
+	}
+	if (potwierdzonoZaproszenie)
+	{
+		MessageBox(okno, "Zaakceptowano twoje zaproszenie do gry.", "Akceptacja", MB_OK);
+		potwierdzonoZaproszenie = false;
+	}
 
 	// obliczenie œredniego czasu pomiêdzy dwoma kolejnnymi symulacjami po to, by zachowaæ  fizycznych 
 	if (licznik_sym % 50 == 0)          // jeœli licznik cykli przekroczy³ pewn¹ wartoœæ, to
@@ -320,8 +360,8 @@ void Cykl_WS()
 // ****    poza grafik¹ 
 void ZakonczenieInterakcji()
 {
-	fprintf(f, "Koniec interakcji\n");
-	fclose(f);
+	//fprintf(f, "Koniec interakcji\n");
+	//fclose(f);
 }
 
 // Funkcja wysylajaca ramke z przekazem, zwraca zrealizowan¹ wartoœæ przekazu
@@ -354,6 +394,27 @@ float WyslaniePrzekazu(int ID_adresata, int typ_przekazu, float wartosc_przekazu
 		int iRozmiar = multi_send->send((char*)&ramka, sizeof(Ramka));
 
 	return ramka.wartosc_przekazu;
+}
+
+void WyslanieZaproszenia(int ID_adresata)
+{
+	Ramka ramka;
+	ramka.typ_ramki = ZAPROSZENIE;
+	ramka.iID = my_vehicle->iID;
+	ramka.iID_adresata = ID_adresata;
+	
+	int iRozmiar = multi_send->send((char*)& ramka, sizeof(Ramka));
+
+}
+void WyslanieAkceptacji(int ID_adresata)
+{
+	Ramka ramka;
+	ramka.typ_ramki = AKCEPTACJA;
+	ramka.iID = my_vehicle->iID;
+	ramka.iID_adresata = ID_adresata;
+
+	int iRozmiar = multi_send->send((char*)& ramka, sizeof(Ramka));
+
 }
 
 
@@ -463,6 +524,21 @@ void KlawiszologiaSterowania(UINT kod_meldunku, WPARAM wParam, LPARAM lParam)
 	}
 	case WM_RBUTTONDOWN: //reakcja na prawy przycisk myszki
 	{
+		//Tylko jeden zaznaczamy 
+		for (long i = 0; i < terrain.liczba_zazn_przedm; i++)
+			terrain.p[terrain.zazn_przedm[i]].czy_zazn = 0;
+		terrain.liczba_zazn_przedm = 0;
+
+		for (map<int, MovableObject*>::iterator it = network_vehicles.begin(); it != network_vehicles.end(); ++it)
+		{
+			if (it->second)
+			{
+				MovableObject* ob = it->second;
+				ob->czy_zazn = 0;
+			}
+		}
+
+		//end of tylko jeden 
 		int x = LOWORD(lParam);
 		int y = HIWORD(lParam);
 		int LSHIFT = GetKeyState(VK_LSHIFT);   // sprawdzenie czy lewy Shift wciśnięty, jeśli tak, to LSHIFT == 1
@@ -766,10 +842,38 @@ void KlawiszologiaSterowania(UINT kod_meldunku, WPARAM wParam, LPARAM lParam)
 		}
 		
 		case 'L':     // rozpoczęcie zaznaczania metodą lasso
+		{
 			Lwcisniety = true;
 			break;
+		}
 		
 		
+
+		 // switch po klawiszach
+		case 'O':     // rozpoczęcie zaznaczania metodą lasso
+		{
+			int zaznaczony = -1;
+			for (map<int, MovableObject*>::iterator it = network_vehicles.begin(); it != network_vehicles.end(); ++it)
+			{
+				if (it->second)
+				{
+					MovableObject* ob = it->second;
+					if (ob->czy_zazn)
+						zaznaczony = ob->iID;
+				}
+			}
+
+			if (zaznaczony != -1) {
+				int result = MessageBox(okno, "Czy chcesz wspolpracowac z zaznaczonym obiektem?", "Polacz", MB_OKCANCEL);
+				if (result == 1)
+				{
+					WyslanieZaproszenia(zaznaczony);
+				}
+			}
+
+
+			break;
+		}
 
 		} // switch po klawiszach
 
