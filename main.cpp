@@ -411,12 +411,12 @@ void Cykl_WS()
 		sprintf(par_wid.napis2, "Wziecie_przedmiotu_o_wartosci_ %f", my_vehicle->wartosc_wzieta);
 		if (oczekuje == PALIWO && terrain.p[my_vehicle->nr_wzietego_przedm].typ == PRZ_MONETA)
 		{
-			float do_oddania = (float)terrain.p[my_vehicle->nr_wzietego_przedm].wartosc * ((float)(100 - my_vehicle->procent_monet) / 100);
+			float do_oddania = (float)terrain.p[my_vehicle->nr_wzietego_przedm].wartosc * ((float)(100 - my_vehicle->procent_monet) / 100) * my_vehicle->umiejetn_zb_monet;
 			WyslaniePrzekazuZespol(wspolpracaiID, GOTOWKA, do_oddania);
 		}
 		else if (oczekuje == GOTOWKA && terrain.p[my_vehicle->nr_wzietego_przedm].typ == PRZ_BECZKA)
 		{
-			float do_oddania = (float)terrain.p[my_vehicle->nr_wzietego_przedm].wartosc * ((float)(100 - my_vehicle->procent_paliwa) / 100);
+			float do_oddania = (float)terrain.p[my_vehicle->nr_wzietego_przedm].wartosc * ((float)(100 - my_vehicle->procent_paliwa) / 100) * my_vehicle->umiejetn_zb_paliwa;
 			WyslaniePrzekazuZespol(wspolpracaiID, PALIWO, do_oddania);
 		}
 

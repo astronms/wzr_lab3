@@ -707,7 +707,7 @@ void MovableObject::Symulacja(float dt)          // obliczenie nowego stanu na p
 				if (mozna_wziac)
 				{
 					//wartosc_wzieta = (float)wartosc*umiejetn_zb_monet;
-					wartosc_wzieta = (float)wartosc * ((float)procent_monet/100);
+					wartosc_wzieta = (float)wartosc * ((float)procent_monet/100) * umiejetn_zb_monet;
 					pieniadze += (long)wartosc_wzieta;
 				}
 
@@ -716,7 +716,7 @@ void MovableObject::Symulacja(float dt)          // obliczenie nowego stanu na p
 			else if (prz->typ == PRZ_BECZKA)
 			{
 				//wartosc_wzieta = (float)wartosc*umiejetn_zb_paliwa;
-				wartosc_wzieta = (float)wartosc * ((float)procent_paliwa/100);
+				wartosc_wzieta = (float)wartosc * ((float)procent_paliwa/100) * umiejetn_zb_paliwa;
 				ilosc_paliwa += wartosc_wzieta;
 				//sprintf(napis2,"Wziecie_paliwa_w_ilosci_ %d",wartosc);
 			}
