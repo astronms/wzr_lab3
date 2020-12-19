@@ -147,6 +147,7 @@ void RysujScene()
 	glRasterPos2f(4.0, -4.0);
 	glPrint("%s", par_wid.napis1);
 	glPrint("%s", par_wid.napis2);
+	glPrint("%s", par_wid.napis3);
 	glLoadIdentity();
 
 

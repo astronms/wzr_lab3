@@ -57,6 +57,11 @@ bool Lwcisniety = 0;
 int akceptacjaOdebranaOdiID = -1;
 int wspolpracaiID = -1;
 bool potwierdzonoZaproszenie = false;
+bool odrzuconoZaproszenie = false;
+int procent_paliwa = 50;
+int procent_monet = 50;
+enum typy_przekazu { GOTOWKA, PALIWO };
+int oczekuje = PALIWO;
 //bool rejestracja_uczestnikow = true;   // rejestracja trwa do momentu wziêcia przedmiotu przez któregokolwiek uczestnika,
 // w przeciwnym razie trzeba by przesy³aæ ca³y stan œrodowiska nowicjuszowi
 
@@ -70,18 +75,23 @@ long nr_miejsca_przedm = terrain.liczba_przedmiotow;  // numer miejsca, w który
 
 int opoznienia = 0;
 
+//Zaproszenie
 bool odebranoZapro = false; 
+int propozycja_monet = -1;
+int propozycja_paliwa = -1;
+int propozycja_oczekuje = -1;
 
 
 extern float WyslaniePrzekazu(int ID_adresata, int typ_przekazu, float wartosc_przekazu);
+void WyslaniePrzekazuZespol(int ID_adresata, int typ_przekazu, float wartosc_przekazu);
 void WyslanieZaproszenia(int ID_adresata);
 void WyslanieAkceptacji(int ID_adresata);
+void WyslanieOdrzucenia(int ID_adresata);
 
 enum typy_ramek {
-	STAN_OBIEKTU, WZIECIE_PRZEDMIOTU, ODNOWIENIE_SIE_PRZEDMIOTU, KOLIZJA, PRZEKAZ, ZAPROSZENIE, AKCEPTACJA
+	STAN_OBIEKTU, WZIECIE_PRZEDMIOTU, ODNOWIENIE_SIE_PRZEDMIOTU, KOLIZJA, PRZEKAZ, ZAPROSZENIE, AKCEPTACJA, ODRZUCENIE
 };
 
-enum typy_przekazu { GOTOWKA, PALIWO };
 
 struct Ramka
 {
@@ -96,11 +106,15 @@ struct Ramka
 	Wektor3 wdV_kolid;     // wektor prêdkoœci wyjœciowej po kolizji (uczestnik o wskazanym adresie powinien 
 	// przyj¹æ t¹ prêdkoœæ)  
 
-	int typ_przekazu;        // gotówka, paliwo
+	int typ_przekazu;       
+	// gotówka, paliwo
 	float wartosc_przekazu;  // iloœæ gotówki lub paliwa 
 	int nr_druzyny;
 
 	long czas_istnienia;        // czas jaki uplyn¹³ od uruchomienia programu
+	int procent_monet;
+	int procent_paliwa;
+	int preferencja_oferujacego;
 };
 
 
@@ -203,6 +217,9 @@ DWORD WINAPI WatekOdbioru(void *ptr)
 			{
 				odebranoZapro = true;
 				akceptacjaOdebranaOdiID = ramka.iID;
+				propozycja_monet = ramka.procent_monet;
+				propozycja_paliwa = ramka.procent_paliwa;
+				propozycja_oczekuje = ramka.preferencja_oferujacego;
 			}
 			break;
 		}
@@ -211,6 +228,15 @@ DWORD WINAPI WatekOdbioru(void *ptr)
 			if (ramka.iID_adresata == my_vehicle->iID)
 			{
 				potwierdzonoZaproszenie = true;
+				wspolpracaiID = ramka.iID;
+			}
+			break;
+		}
+		case ODRZUCENIE:
+		{
+			if (ramka.iID_adresata == my_vehicle->iID)
+			{
+				odrzuconoZaproszenie = true;
 				wspolpracaiID = ramka.iID;
 			}
 			break;
@@ -261,18 +287,59 @@ void Cykl_WS()
 	licznik_sym++;
 
 	if (odebranoZapro) {
-		int result = MessageBox(okno, "Odebrano zaproszenie do gry. Czy chcesz akceptowac?", "Akceptacja", MB_OK);
-		if (result == 1) {
+		char buff[1024];
+		if (propozycja_oczekuje == PALIWO)
+			sprintf(buff, "Odebrano zaproszenie do gry od gracza ID: %d \nGracz oferuje %d procent monet w zamian za %d procent paliwa. \nCzy chcesz akceptowac?", akceptacjaOdebranaOdiID, propozycja_monet, procent_paliwa);
+		else
+			sprintf(buff, "Odebrano zaproszenie do gry od gracza ID: %d \nGracz oferuje %d procent paliwa w zamian za %d procent monet. \nCzy chcesz akceptowac?", akceptacjaOdebranaOdiID, procent_paliwa, propozycja_monet);
+		int result = MessageBox(okno, buff, "Akceptacja", MB_YESNO);
+		if (result == 6) {
 			wspolpracaiID = akceptacjaOdebranaOdiID;
 			odebranoZapro = false;
 			WyslanieAkceptacji(akceptacjaOdebranaOdiID);
+			if (propozycja_oczekuje == GOTOWKA)
+			{
+				oczekuje = PALIWO;
+				my_vehicle->procent_monet = 100 - propozycja_monet;
+				sprintf(par_wid.napis2, "zmieniam procen monet: %d", my_vehicle->procent_monet);
+			}
+			else
+			{
+				oczekuje = GOTOWKA;
+				my_vehicle->procent_paliwa = propozycja_paliwa;
+				sprintf(par_wid.napis2, "zmieniam procen paliwa: %d", my_vehicle->procent_paliwa);
+			}
 		}
-		
+		if (result == 7 || result == 2) {
+			odebranoZapro = false;
+			WyslanieOdrzucenia(akceptacjaOdebranaOdiID);
+		}
+
 	}
 	if (potwierdzonoZaproszenie)
 	{
-		MessageBox(okno, "Zaakceptowano twoje zaproszenie do gry.", "Akceptacja", MB_OK);
+		char buff[1024];
+		sprintf(buff, "Gracz ID: %d zaakceptowal twoje zaproszenie do gry.", wspolpracaiID);
+		MessageBox(okno, buff, "Akceptacja", MB_OK);
 		potwierdzonoZaproszenie = false;
+		if (oczekuje == PALIWO)
+		{
+			my_vehicle->procent_monet = 100 - procent_monet;
+			sprintf(par_wid.napis2, "zmieniam procen monet: %d", my_vehicle->procent_monet);
+		}
+		else
+		{
+			my_vehicle->procent_paliwa = procent_paliwa;
+			sprintf(par_wid.napis2, "zmieniam procen paliwa: %d", my_vehicle->procent_paliwa);
+		}
+	}
+	if (odrzuconoZaproszenie)
+	{	
+		char buff[1024];
+		sprintf(buff, "Gracz ID: %d odrzucil twoje zaproszenie do gry.", wspolpracaiID);
+		MessageBox(okno, buff, "Odrzucenie", MB_OK);
+		wspolpracaiID = -1;
+		odrzuconoZaproszenie = false;
 	}
 
 	// obliczenie œredniego czasu pomiêdzy dwoma kolejnnymi symulacjami po to, by zachowaæ  fizycznych 
@@ -286,6 +353,15 @@ void Cykl_WS()
 
 		sprintf(par_wid.napis1, " %0.0f_fps, paliwo = %0.2f, gotowka = %d,", fFps, my_vehicle->ilosc_paliwa, my_vehicle->pieniadze);
 		if (licznik_sym % 500 == 0) sprintf(par_wid.napis2, "");
+
+		if(wspolpracaiID > -1)
+			sprintf(par_wid.napis3, "_Wspolpraca_z_ID:_%d", wspolpracaiID);
+		else {
+			if(oczekuje == PALIWO)
+				sprintf(par_wid.napis3, "_Oferuje_%d_procent_monet_wzamian_za_%d_procent_paliwa.", procent_monet, procent_paliwa);
+			else
+				sprintf(par_wid.napis3, "_Oferuje_%d_procent_paliwa_wzamian_za_%d_procent_monet.", procent_paliwa, procent_monet);
+		}
 	}
 
 
@@ -333,6 +409,16 @@ void Cykl_WS()
 		int iRozmiar = multi_send->send((char*)&ramka, sizeof(Ramka));
 
 		sprintf(par_wid.napis2, "Wziecie_przedmiotu_o_wartosci_ %f", my_vehicle->wartosc_wzieta);
+		if (oczekuje == PALIWO && terrain.p[my_vehicle->nr_wzietego_przedm].typ == PRZ_MONETA)
+		{
+			float do_oddania = (float)terrain.p[my_vehicle->nr_wzietego_przedm].wartosc * ((float)(100 - my_vehicle->procent_monet) / 100);
+			WyslaniePrzekazuZespol(wspolpracaiID, GOTOWKA, do_oddania);
+		}
+		else if (oczekuje == GOTOWKA && terrain.p[my_vehicle->nr_wzietego_przedm].typ == PRZ_BECZKA)
+		{
+			float do_oddania = (float)terrain.p[my_vehicle->nr_wzietego_przedm].wartosc * ((float)(100 - my_vehicle->procent_paliwa) / 100);
+			WyslaniePrzekazuZespol(wspolpracaiID, PALIWO, do_oddania);
+		}
 
 		my_vehicle->nr_wzietego_przedm = -1;
 		my_vehicle->wartosc_wzieta = 0;
@@ -396,12 +482,28 @@ float WyslaniePrzekazu(int ID_adresata, int typ_przekazu, float wartosc_przekazu
 	return ramka.wartosc_przekazu;
 }
 
+void WyslaniePrzekazuZespol(int ID_adresata, int typ_przekazu, float wartosc_przekazu)
+{
+	Ramka ramka;
+	ramka.typ_ramki = PRZEKAZ;
+	ramka.iID_adresata = ID_adresata;
+	ramka.typ_przekazu = typ_przekazu;
+	ramka.wartosc_przekazu = wartosc_przekazu;
+	ramka.iID = my_vehicle->iID;
+
+	if (ramka.wartosc_przekazu > 0)
+		int iRozmiar = multi_send->send((char*)& ramka, sizeof(Ramka));
+}
+
 void WyslanieZaproszenia(int ID_adresata)
 {
 	Ramka ramka;
 	ramka.typ_ramki = ZAPROSZENIE;
 	ramka.iID = my_vehicle->iID;
 	ramka.iID_adresata = ID_adresata;
+	ramka.procent_monet = procent_monet;
+	ramka.procent_paliwa = procent_paliwa;
+	ramka.preferencja_oferujacego = oczekuje;
 	
 	int iRozmiar = multi_send->send((char*)& ramka, sizeof(Ramka));
 
@@ -410,6 +512,16 @@ void WyslanieAkceptacji(int ID_adresata)
 {
 	Ramka ramka;
 	ramka.typ_ramki = AKCEPTACJA;
+	ramka.iID = my_vehicle->iID;
+	ramka.iID_adresata = ID_adresata;
+
+	int iRozmiar = multi_send->send((char*)& ramka, sizeof(Ramka));
+
+}
+void WyslanieOdrzucenia(int ID_adresata)
+{
+	Ramka ramka;
+	ramka.typ_ramki = ODRZUCENIE;
 	ramka.iID = my_vehicle->iID;
 	ramka.iID_adresata = ID_adresata;
 
@@ -850,7 +962,7 @@ void KlawiszologiaSterowania(UINT kod_meldunku, WPARAM wParam, LPARAM lParam)
 		
 
 		 // switch po klawiszach
-		case 'O':     // rozpoczęcie zaznaczania metodą lasso
+		case 'O':   
 		{
 			int zaznaczony = -1;
 			for (map<int, MovableObject*>::iterator it = network_vehicles.begin(); it != network_vehicles.end(); ++it)
@@ -863,8 +975,13 @@ void KlawiszologiaSterowania(UINT kod_meldunku, WPARAM wParam, LPARAM lParam)
 				}
 			}
 
-			if (zaznaczony != -1) {
-				int result = MessageBox(okno, "Czy chcesz wspolpracowac z zaznaczonym obiektem?", "Polacz", MB_OKCANCEL);
+			if (zaznaczony != -1 && wspolpracaiID == -1) {
+				char buf[1024];
+				if (oczekuje == PALIWO)
+					sprintf(buf, "Czy chcesz wspolpracowac z zaznaczonym obiektem?\nOferujesz %d procent monet w zamian za %d procent paliwa.", procent_monet, procent_paliwa);
+				else
+					sprintf(buf, "Czy chcesz wspolpracowac z zaznaczonym obiektem?\nOferujesz %d procent paliwa w zamian za %d procent monet.", procent_paliwa, procent_monet);
+				int result = MessageBox(okno, buf, "Polacz", MB_OKCANCEL);
 				if (result == 1)
 				{
 					WyslanieZaproszenia(zaznaczony);
@@ -872,6 +989,39 @@ void KlawiszologiaSterowania(UINT kod_meldunku, WPARAM wParam, LPARAM lParam)
 			}
 
 
+			break;
+		}
+		case 'P':     // rozpoczęcie zaznaczania metodą lasso
+		{
+			if (wspolpracaiID == -1)
+			{
+				if (oczekuje == PALIWO)
+					oczekuje = GOTOWKA;
+				else
+					oczekuje = PALIWO;
+			}
+			break;
+		}
+		case 'I':
+		{
+			if (wspolpracaiID == -1)
+			{
+				if (procent_monet < 100)
+					procent_monet += 10;
+				else
+					procent_monet = 10;
+			}
+			break;
+		}
+		case 'U':
+		{
+			if (wspolpracaiID == -1)
+			{
+				if (procent_paliwa < 100)
+					procent_paliwa += 10;
+				else
+					procent_paliwa = 10;
+			}
 			break;
 		}
 

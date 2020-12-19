@@ -29,7 +29,7 @@ struct ParametryWidoku
 	float kat_kam_z;
 	float przes_w_prawo;                        // przesunięcie kamery w prawo (w lewo o wart. ujemnej) - chodzi głównie o tryb edycji
 	float przes_w_dol;                          // przesunięcie do dołu (w górę o wart. ujemnej)          i widok z góry (klawisz Q)  
-	char napis1[512], napis2[512];
+	char napis1[512], napis2[512], napis3[512];
 };
 
 void UstawienieStandardowychParWidoku(ParametryWidoku *p);

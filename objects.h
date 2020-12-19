@@ -25,6 +25,9 @@ class MovableObject
 public:
 	int iID;                  // identyfikator obiektu
 
+	int procent_paliwa;
+	int procent_monet;
+
 	// parametry stanu:
 	Wektor3 wPol;             // polozenie obiektu
 	kwaternion qOrient;       // orientacja (polozenie katowe)

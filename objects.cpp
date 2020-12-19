@@ -57,6 +57,8 @@ MovableObject::MovableObject(Terrain *t)             // konstruktor
 
 	//iID = (unsigned int)(clock() % 1000);  // identyfikator obiektu
 	iID = (unsigned int)(rand() % 1000);  // identyfikator obiektu
+	procent_monet = 100;
+	procent_paliwa = 100;
 	//fprintf(f, "Nowy obiekt: iID = %d\n", iID);
 	iID_wlasc = iID;           // identyfikator w³aœciciela obiektu
 	czy_autonom = 0;
@@ -704,7 +706,8 @@ void MovableObject::Symulacja(float dt)          // obliczenie nowego stanu na p
 
 				if (mozna_wziac)
 				{
-					wartosc_wzieta = (float)wartosc*umiejetn_zb_monet;
+					//wartosc_wzieta = (float)wartosc*umiejetn_zb_monet;
+					wartosc_wzieta = (float)wartosc * ((float)procent_monet/100);
 					pieniadze += (long)wartosc_wzieta;
 				}
 
@@ -712,7 +715,8 @@ void MovableObject::Symulacja(float dt)          // obliczenie nowego stanu na p
 			} // jeœli to PRZ_MONETA
 			else if (prz->typ == PRZ_BECZKA)
 			{
-				wartosc_wzieta = (float)wartosc*umiejetn_zb_paliwa;
+				//wartosc_wzieta = (float)wartosc*umiejetn_zb_paliwa;
+				wartosc_wzieta = (float)wartosc * ((float)procent_paliwa/100);
 				ilosc_paliwa += wartosc_wzieta;
 				//sprintf(napis2,"Wziecie_paliwa_w_ilosci_ %d",wartosc);
 			}
